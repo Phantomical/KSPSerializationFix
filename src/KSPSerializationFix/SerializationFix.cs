@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -71,6 +72,20 @@ internal sealed class UnsupportedPlatformException(string message) : Exception(m
 
 internal static class SerializationFix
 {
+    internal static void RegisterDependentAssemblies()
+    {
+        var self = typeof(SerializationFix).Assembly;
+        var lself = AssemblyLoader.loadedAssemblies.First(asm => asm.assembly == self);
+
+        var targets = AssemblyLoader
+            .loadedAssemblies.Where(asm => asm.deps.Contains(lself))
+            .Select(asm => asm.assembly)
+            .Where(asm => asm is not null)
+            .ToArray();
+
+        RegisterAssemblies(targets);
+    }
+
     internal static void RegisterAssemblies(Assembly[] assemblies)
     {
         bool isDbgBuild = Profiler.supported;
@@ -218,5 +233,28 @@ internal static class SerializationFix
         array.Ptr = newBuf;
         array.Size = newSize;
         array.Capacity = newCapacity;
+    }
+}
+
+// We run ourselves as one of the first vessel modules to be registered, so we
+// can be sure that we run before any other class might need to deserialize
+// anything.
+internal class SerializationFixInjector : VesselModule
+{
+    static SerializationFixInjector()
+    {
+        SerializationFix.RegisterDependentAssemblies();
+    }
+}
+
+// Clean up our temporary vessel module, since actually adding it to any ships
+// would be a waste of resources.
+[KSPAddon(KSPAddon.Startup.Instantly, once: true)]
+internal class SerializationFixCleanup : MonoBehaviour
+{
+    void Awake()
+    {
+        VesselModuleManager.RemoveModuleOfType(typeof(SerializationFixInjector));
+        Destroy(this);
     }
 }
