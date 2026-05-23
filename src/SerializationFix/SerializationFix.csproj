@@ -1,13 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>KSPSerializationFix</AssemblyName>
+    <!-- The version used for all libraries in this project. -->
+    <Version>0.1.0</Version>
+
     <RootNamespace>KSPSerializationFix</RootNamespace>
     <TargetFramework>net481</TargetFramework>
 
     <Description>Fixes for KSP's stock serialization system</Description>
-    <Company>Phantomical</Company>
-    <Product>KSPSerializationFix</Product>
-    <Copyright>Copyright © Sean Lynch 2026</Copyright>
 
     <KSPBT_ModRoot>$(ProjectRootDir)GameData\000_SerializationFix</KSPBT_ModRoot>
     <KSPBT_ModPluginFolder>Plugin</KSPBT_ModPluginFolder>
@@ -20,10 +19,6 @@
 
     <!-- Generate a nuget lockfile so dependencies can be cached in CI -->
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(KSPBT_ModVersion)' != '' ">
-    <Version>$(KSPBT_ModVersion)</Version>
   </PropertyGroup>
 
   <ItemGroup>
