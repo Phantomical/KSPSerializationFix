@@ -42,13 +42,33 @@
   </ItemGroup>
 
   <ItemGroup>
-    <KSPVersionFile Include="KSPSerializationFix.version">
+    <KSPVersionFile Include="$(IntermediateOutputPath)KSPSerializationFix.version.template">
       <Destination>$(KSPBT_ModRoot)/KSPSerializationFix.version</Destination>
+      <URL>https://github.com/Phantomical/KSPSerializationFix/releases/latest/download/KSPSerializationFix.version</URL>
+      <Download>https://github.com/Phantomical/KSPSerializationFix/releases</Download>
       <KSP_Version>1.12.5</KSP_Version>
       <KSP_Version_Min>1.12.5</KSP_Version_Min>
       <KSP_Version_Max>1.12.99</KSP_Version_Max>
     </KSPVersionFile>
   </ItemGroup>
+
+  <!--
+    KSPBT_GenerateVersionFile reads this template as the starting JSON and
+    JsonPokes the metadata above on top of it. Used to seed fields the target
+    doesn't expose directly (GITHUB).
+  -->
+  <Target Name="WriteVersionFileTemplate" BeforeTargets="KSPBT_GenerateVersionFile">
+    <PropertyGroup>
+      <_VersionTemplate>{ "GITHUB": { "USERNAME": "Phantomical", "REPOSITORY": "KSPSerializationFix" } }</_VersionTemplate>
+    </PropertyGroup>
+    <MakeDir Directories="$(IntermediateOutputPath)" />
+    <WriteLinesToFile
+      File="$(IntermediateOutputPath)KSPSerializationFix.version.template"
+      Lines="$(_VersionTemplate)"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true"
+    />
+  </Target>
 
   <Target Name="CopyExtrasToPluginFolder" AfterTargets="KSPBT_CopyDLLsToPluginFolder">
     <ItemGroup>
