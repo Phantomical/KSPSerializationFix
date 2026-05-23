@@ -12,7 +12,8 @@
     <KSPBT_ModRoot>$(ProjectRootDir)GameData\000_SerializationFix</KSPBT_ModRoot>
     <KSPBT_ModPluginFolder>Plugin</KSPBT_ModPluginFolder>
 
-    <LangVersion>12</LangVersion>
+    <LangVersion>14</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DebugType>portable</DebugType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>CS1591</NoWarn>
@@ -27,6 +28,18 @@
 
   <ItemGroup>
     <PackageReference Include="KSPBuildTools" Version="1.1.1" />
+    <PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Expose the internal IntPtr field on System.Reflection.Assembly that
+      stores the native MonoAssembly* pointer. See MonoBridge for usage.
+    -->
+    <Publicize Include="mscorlib:System.Reflection.Assembly._mono_assembly" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
@@ -47,7 +60,10 @@
       <_ExtrasToCopy Include="$(TargetDir)/**/*.xml" />
     </ItemGroup>
 
-    <Copy SourceFiles="@(_ExtrasToCopy)" DestinationFolder="$(KSPBT_ModRoot)/$(KSPBT_ModPluginFolder)/%(RecursiveDir)" />
+    <Copy
+      SourceFiles="@(_ExtrasToCopy)"
+      DestinationFolder="$(KSPBT_ModRoot)/$(KSPBT_ModPluginFolder)/%(RecursiveDir)"
+    />
   </Target>
 
   <!--
@@ -56,7 +72,10 @@
   -->
   <Target Name="CopyGameDataContent" AfterTargets="CopyFilesToOutputDirectory">
     <ItemGroup>
-      <_GameDataContent Include="$(ProjectRootDir)src\GameData\**\*.*" Exclude="$(ProjectRootDir)src\GameData\**\.gitkeep" />
+      <_GameDataContent
+        Include="$(ProjectRootDir)src\GameData\**\*.*"
+        Exclude="$(ProjectRootDir)src\GameData\**\.gitkeep"
+      />
     </ItemGroup>
     <Copy SourceFiles="@(_GameDataContent)" DestinationFolder="$(KSPBT_ModRoot)\%(RecursiveDir)" />
   </Target>
