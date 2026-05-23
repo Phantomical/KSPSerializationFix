@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using KSPSerializationFix.Platform;
@@ -58,12 +59,6 @@ using UnityEngine.Profiling;
 
 namespace KSPSerializationFix;
 
-internal struct AssemblyInfo
-{
-    public IntPtr image;
-    public string name;
-}
-
 internal enum AssemblyType : int
 {
     User = 0,
@@ -76,7 +71,7 @@ internal sealed class UnsupportedPlatformException(string message) : Exception(m
 
 internal static class SerializationFix
 {
-    internal static void RegisterAssemblies(AssemblyInfo[] infos)
+    internal static void RegisterAssemblies(Assembly[] assemblies)
     {
         bool isDbgBuild = Profiler.supported;
 
@@ -89,23 +84,23 @@ internal static class SerializationFix
         {
             case RuntimePlatform.WindowsPlayer:
                 if (isDbgBuild)
-                    WinDbg.RegisterAssemblies(infos);
+                    WinDbg.RegisterAssemblies(assemblies);
                 else
-                    WinRel.RegisterAssemblies(infos);
+                    WinRel.RegisterAssemblies(assemblies);
                 break;
 
             case RuntimePlatform.LinuxPlayer:
                 if (isDbgBuild)
-                    LinuxDbg.RegisterAssemblies(infos);
+                    LinuxDbg.RegisterAssemblies(assemblies);
                 else
-                    LinuxRel.RegisterAssemblies(infos);
+                    LinuxRel.RegisterAssemblies(assemblies);
                 break;
 
             case RuntimePlatform.OSXPlayer:
                 if (isDbgBuild)
-                    MacDbg.RegisterAssemblies(infos);
+                    MacDbg.RegisterAssemblies(assemblies);
                 else
-                    MacRel.RegisterAssemblies(infos);
+                    MacRel.RegisterAssemblies(assemblies);
                 break;
 
             default:
@@ -125,7 +120,7 @@ internal static class SerializationFix
         TIntArray,
         TPtrArray,
         TMonoManager
-    >(TPlatform platform, AssemblyInfo[] infos)
+    >(TPlatform platform, Assembly[] assemblies)
         where TPlatform : IPlatform<TString>
         where TString : unmanaged
         where TStringArray : unmanaged, IDynamicArray<TString>
@@ -133,9 +128,9 @@ internal static class SerializationFix
         where TPtrArray : unmanaged, IDynamicArray<IntPtr>
         where TMonoManager : unmanaged, IMonoManager<TString, TStringArray, TIntArray, TPtrArray>
     {
-        if (infos == null)
-            throw new ArgumentNullException(nameof(infos));
-        if (infos.Length == 0)
+        if (assemblies == null)
+            throw new ArgumentNullException(nameof(assemblies));
+        if (assemblies.Length == 0)
             return;
 
         IntPtr mgrPtr = platform.GetMonoManagerPointer();
@@ -149,14 +144,15 @@ internal static class SerializationFix
                 "MonoManager assemblies not loaded yet; called too early"
             );
 
-        var names = new TString[infos.Length];
-        var types = new int[infos.Length];
-        var images = new IntPtr[infos.Length];
-        var paths = new int[infos.Length];
+        var names = new TString[assemblies.Length];
+        var types = new int[assemblies.Length];
+        var images = new IntPtr[assemblies.Length];
+        var paths = new int[assemblies.Length];
 
-        for (int i = 0; i < infos.Length; i++)
+        for (int i = 0; i < assemblies.Length; i++)
         {
-            string name = infos[i].name ?? string.Empty;
+            Assembly assembly = assemblies[i];
+            string name = assembly.GetName().Name ?? string.Empty;
             byte[] utf8 = Encoding.UTF8.GetBytes(name);
 
             IntPtr buf = Marshal.AllocHGlobal(utf8.Length + 1);
@@ -166,7 +162,7 @@ internal static class SerializationFix
 
             names[i] = platform.CreateString(buf, utf8.Length);
             types[i] = (int)AssemblyType.User;
-            images[i] = infos[i].image;
+            images[i] = Mono.GetMonoImage(assembly);
             paths[i] = -1;
         }
 

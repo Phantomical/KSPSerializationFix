@@ -88,7 +88,7 @@ internal static class LinuxRel
         }
     }
 
-    internal static void RegisterAssemblies(AssemblyInfo[] infos) =>
+    internal static void RegisterAssemblies(System.Reflection.Assembly[] assemblies) =>
         SerializationFix.RegisterAssemblies<
             Platform,
             Release.BasicString,
@@ -96,5 +96,5 @@ internal static class LinuxRel
             Release.DynamicArray<int>,
             Release.DynamicArray<IntPtr>,
             MonoManager
-        >(default, infos);
+        >(default, assemblies);
 }

@@ -83,7 +83,7 @@ internal static class WinRel
         }
     }
 
-    internal static void RegisterAssemblies(AssemblyInfo[] infos) =>
+    internal static void RegisterAssemblies(System.Reflection.Assembly[] assemblies) =>
         SerializationFix.RegisterAssemblies<
             Platform,
             Release.BasicString,
@@ -91,5 +91,5 @@ internal static class WinRel
             Release.DynamicArray<int>,
             Release.DynamicArray<IntPtr>,
             MonoManager
-        >(default, infos);
+        >(default, assemblies);
 }

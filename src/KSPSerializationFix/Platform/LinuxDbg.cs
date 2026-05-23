@@ -83,7 +83,7 @@ internal static class LinuxDbg
         }
     }
 
-    internal static void RegisterAssemblies(AssemblyInfo[] infos) =>
+    internal static void RegisterAssemblies(System.Reflection.Assembly[] assemblies) =>
         SerializationFix.RegisterAssemblies<
             Platform,
             Debug.BasicString,
@@ -91,5 +91,5 @@ internal static class LinuxDbg
             Debug.DynamicArray<int>,
             Debug.DynamicArray<IntPtr>,
             MonoManager
-        >(default, infos);
+        >(default, assemblies);
 }

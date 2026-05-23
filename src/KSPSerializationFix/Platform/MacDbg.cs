@@ -84,7 +84,7 @@ internal static class MacDbg
         }
     }
 
-    internal static void RegisterAssemblies(AssemblyInfo[] infos) =>
+    internal static void RegisterAssemblies(System.Reflection.Assembly[] assemblies) =>
         SerializationFix.RegisterAssemblies<
             Platform,
             Debug.BasicString,
@@ -92,5 +92,5 @@ internal static class MacDbg
             Debug.DynamicArray<int>,
             Debug.DynamicArray<IntPtr>,
             MonoManager
-        >(default, infos);
+        >(default, assemblies);
 }
