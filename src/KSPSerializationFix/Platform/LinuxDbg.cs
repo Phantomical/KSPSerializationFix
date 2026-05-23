@@ -19,19 +19,25 @@ internal static class LinuxDbg
     /// verified; 696 extrapolated from WinDbg's hash_map size delta.
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 696)]
-    public struct MonoManager : IMonoManager<Debug.DynamicArray>
+    public struct MonoManager
+        : IMonoManager<
+            Debug.BasicString,
+            Debug.DynamicArray<Debug.BasicString>,
+            Debug.DynamicArray<int>,
+            Debug.DynamicArray<IntPtr>
+        >
     {
         [FieldOffset(0x1D8)]
-        public Debug.DynamicArray m_AssemblyNames;
+        public Debug.DynamicArray<Debug.BasicString> m_AssemblyNames;
 
         [FieldOffset(0x200)]
-        public Debug.DynamicArray m_AssemblyTypes;
+        public Debug.DynamicArray<int> m_AssemblyTypes;
 
         [FieldOffset(0x228)]
-        public Debug.DynamicArray m_ScriptImages;
+        public Debug.DynamicArray<IntPtr> m_ScriptImages;
 
         [FieldOffset(0x258)]
-        public Debug.DynamicArray m_AssemblyMonoPathsIndex;
+        public Debug.DynamicArray<int> m_AssemblyMonoPathsIndex;
 
         [FieldOffset(0x290)]
         public byte m_AreAssembliesLoaded;
@@ -41,16 +47,16 @@ internal static class LinuxDbg
         public bool AreAssembliesLoaded => m_AreAssembliesLoaded != 0;
 
         [UnscopedRef]
-        public ref Debug.DynamicArray AssemblyNames => ref m_AssemblyNames;
+        public ref Debug.DynamicArray<Debug.BasicString> AssemblyNames => ref m_AssemblyNames;
 
         [UnscopedRef]
-        public ref Debug.DynamicArray AssemblyTypes => ref m_AssemblyTypes;
+        public ref Debug.DynamicArray<int> AssemblyTypes => ref m_AssemblyTypes;
 
         [UnscopedRef]
-        public ref Debug.DynamicArray ScriptImages => ref m_ScriptImages;
+        public ref Debug.DynamicArray<IntPtr> ScriptImages => ref m_ScriptImages;
 
         [UnscopedRef]
-        public ref Debug.DynamicArray AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
+        public ref Debug.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
     // Function / global RVAs in UnityPlayer.so (image base 0x0).
@@ -93,7 +99,9 @@ internal static class LinuxDbg
         SerializationFix.RegisterAssemblies<
             Platform,
             Debug.BasicString,
-            Debug.DynamicArray,
+            Debug.DynamicArray<Debug.BasicString>,
+            Debug.DynamicArray<int>,
+            Debug.DynamicArray<IntPtr>,
             MonoManager
         >(default, infos);
 }

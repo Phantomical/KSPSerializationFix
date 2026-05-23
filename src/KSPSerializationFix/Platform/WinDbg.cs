@@ -16,19 +16,25 @@ internal static class WinDbg
 {
     /// <summary>MonoManager - sizeof 712 (verified from dev PDB).</summary>
     [StructLayout(LayoutKind.Explicit, Size = 712)]
-    internal struct MonoManager : IMonoManager<Debug.DynamicArray>
+    internal struct MonoManager
+        : IMonoManager<
+            Debug.BasicString,
+            Debug.DynamicArray<Debug.BasicString>,
+            Debug.DynamicArray<int>,
+            Debug.DynamicArray<IntPtr>
+        >
     {
         [FieldOffset(0x1E0)]
-        public Debug.DynamicArray m_AssemblyNames;
+        public Debug.DynamicArray<Debug.BasicString> m_AssemblyNames;
 
         [FieldOffset(0x208)]
-        public Debug.DynamicArray m_AssemblyTypes;
+        public Debug.DynamicArray<int> m_AssemblyTypes;
 
         [FieldOffset(0x230)]
-        public Debug.DynamicArray m_ScriptImages;
+        public Debug.DynamicArray<IntPtr> m_ScriptImages;
 
         [FieldOffset(0x260)]
-        public Debug.DynamicArray m_AssemblyMonoPathsIndex;
+        public Debug.DynamicArray<int> m_AssemblyMonoPathsIndex;
 
         [FieldOffset(0x298)]
         public byte m_AreAssembliesLoaded;
@@ -38,16 +44,16 @@ internal static class WinDbg
         public bool AreAssembliesLoaded => m_AreAssembliesLoaded != 0;
 
         [UnscopedRef]
-        public ref Debug.DynamicArray AssemblyNames => ref m_AssemblyNames;
+        public ref Debug.DynamicArray<Debug.BasicString> AssemblyNames => ref m_AssemblyNames;
 
         [UnscopedRef]
-        public ref Debug.DynamicArray AssemblyTypes => ref m_AssemblyTypes;
+        public ref Debug.DynamicArray<int> AssemblyTypes => ref m_AssemblyTypes;
 
         [UnscopedRef]
-        public ref Debug.DynamicArray ScriptImages => ref m_ScriptImages;
+        public ref Debug.DynamicArray<IntPtr> ScriptImages => ref m_ScriptImages;
 
         [UnscopedRef]
-        public ref Debug.DynamicArray AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
+        public ref Debug.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
     // Function / global RVAs in UnityPlayer.dll (image base 0x180000000).
@@ -90,7 +96,9 @@ internal static class WinDbg
         SerializationFix.RegisterAssemblies<
             Platform,
             Debug.BasicString,
-            Debug.DynamicArray,
+            Debug.DynamicArray<Debug.BasicString>,
+            Debug.DynamicArray<int>,
+            Debug.DynamicArray<IntPtr>,
             MonoManager
         >(default, infos);
 }

@@ -7,6 +7,7 @@
 // release counterpart on the matching platform.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace KSPSerializationFix.Platform;
@@ -15,7 +16,8 @@ internal static class Debug
 {
     /// <summary>dynamic_array&lt;T&gt; - 40 bytes (dev MemLabelId is 12 bytes).</summary>
     [StructLayout(LayoutKind.Sequential, Size = 40)]
-    internal struct DynamicArray : IDynamicArrayOps
+    internal struct DynamicArray<T> : IDynamicArray<T>
+        where T : unmanaged
     {
         public IntPtr m_ptr; // +0x00
         public IntPtr m_RootReferenceWithSalt; // +0x08
@@ -24,59 +26,14 @@ internal static class Debug
         public ulong m_size; // +0x18
         public ulong m_capacity; // +0x20
 
-        public ulong Size => m_size;
-        public IntPtr Ptr => m_ptr;
+        [UnscopedRef]
+        public ref IntPtr Ptr => ref m_ptr;
 
-        /// <summary>
-        /// Append a sequence of elements. Always reallocates a fresh buffer
-        /// and memcpys the existing contents. The new buffer is marked
-        /// borrowed (low bit of m_capacity = 1) so Unity's dtor at
-        /// ~dynamic_array skips both per-element destruction and the buffer
-        /// free. The previous m_ptr is intentionally leaked - Unity allocated
-        /// it via a MemLabelId-aware allocator we cannot match from C#.
-        ///
-        /// m_capacity stores the raw count with the LSB as flag (verified
-        /// against the move ctor at UnityPlayer.dll +0x134DB0 which copies
-        /// it verbatim). We round the allocation up to (newSize | 1) so the
-        /// 1-slot slack implied by an even newSize is real backing memory,
-        /// in case any code path treats m_capacity literally and writes
-        /// past m_size. Caller must ensure no other code is concurrently
-        /// reading the array.
-        /// </summary>
-        public unsafe void Append<T>(T[] values)
-            where T : unmanaged
-        {
-            if (values == null)
-                throw new ArgumentNullException(nameof(values));
-            if (values.Length == 0)
-                return;
+        [UnscopedRef]
+        public ref ulong Size => ref m_size;
 
-            int elemSize = sizeof(T);
-            ulong addCount = (ulong)values.Length;
-            ulong newSize = m_size + addCount;
-            ulong newCapacity = newSize | 1UL;
-            long bytes = checked((long)newCapacity * elemSize);
-            IntPtr newBuf = Marshal.AllocHGlobal((IntPtr)bytes);
-
-            if (m_ptr != IntPtr.Zero && m_size > 0)
-            {
-                Buffer.MemoryCopy((void*)m_ptr, (void*)newBuf, bytes, (long)m_size * elemSize);
-            }
-
-            fixed (T* src = values)
-            {
-                Buffer.MemoryCopy(
-                    src,
-                    (byte*)newBuf + (long)m_size * elemSize,
-                    bytes - (long)m_size * elemSize,
-                    (long)addCount * elemSize
-                );
-            }
-
-            m_ptr = newBuf;
-            m_size = newSize;
-            m_capacity = newCapacity;
-        }
+        [UnscopedRef]
+        public ref ulong Capacity => ref m_capacity;
     }
 
     /// <summary>

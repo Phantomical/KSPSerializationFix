@@ -16,19 +16,25 @@ internal static class MacRel
 {
     /// <summary>MonoManager - sizeof 608 (verified from dSYM DWARF).</summary>
     [StructLayout(LayoutKind.Explicit, Size = 608)]
-    public struct MonoManager : IMonoManager<Release.DynamicArray>
+    public struct MonoManager
+        : IMonoManager<
+            Release.BasicString,
+            Release.DynamicArray<Release.BasicString>,
+            Release.DynamicArray<int>,
+            Release.DynamicArray<IntPtr>
+        >
     {
         [FieldOffset(0x1A8)]
-        public Release.DynamicArray m_AssemblyNames;
+        public Release.DynamicArray<Release.BasicString> m_AssemblyNames;
 
         [FieldOffset(0x1C8)]
-        public Release.DynamicArray m_AssemblyTypes;
+        public Release.DynamicArray<int> m_AssemblyTypes;
 
         [FieldOffset(0x1E8)]
-        public Release.DynamicArray m_ScriptImages;
+        public Release.DynamicArray<IntPtr> m_ScriptImages;
 
         [FieldOffset(0x210)]
-        public Release.DynamicArray m_AssemblyMonoPathsIndex;
+        public Release.DynamicArray<int> m_AssemblyMonoPathsIndex;
 
         [FieldOffset(0x240)]
         public byte m_AreAssembliesLoaded;
@@ -38,16 +44,17 @@ internal static class MacRel
         public bool AreAssembliesLoaded => m_AreAssembliesLoaded != 0;
 
         [UnscopedRef]
-        public ref Release.DynamicArray AssemblyNames => ref m_AssemblyNames;
+        public ref Release.DynamicArray<Release.BasicString> AssemblyNames => ref m_AssemblyNames;
 
         [UnscopedRef]
-        public ref Release.DynamicArray AssemblyTypes => ref m_AssemblyTypes;
+        public ref Release.DynamicArray<int> AssemblyTypes => ref m_AssemblyTypes;
 
         [UnscopedRef]
-        public ref Release.DynamicArray ScriptImages => ref m_ScriptImages;
+        public ref Release.DynamicArray<IntPtr> ScriptImages => ref m_ScriptImages;
 
         [UnscopedRef]
-        public ref Release.DynamicArray AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
+        public ref Release.DynamicArray<int> AssemblyMonoPathsIndex =>
+            ref m_AssemblyMonoPathsIndex;
     }
 
     // Function / global RVAs in UnityPlayer.dylib (image base 0x0).
@@ -90,7 +97,9 @@ internal static class MacRel
         SerializationFix.RegisterAssemblies<
             Platform,
             Release.BasicString,
-            Release.DynamicArray,
+            Release.DynamicArray<Release.BasicString>,
+            Release.DynamicArray<int>,
+            Release.DynamicArray<IntPtr>,
             MonoManager
         >(default, infos);
 }

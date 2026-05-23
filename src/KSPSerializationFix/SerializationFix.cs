@@ -109,14 +109,20 @@ internal static class SerializationFix
     /// <summary>
     /// Modify unity internals so as to register these assemblies for serialization.
     /// </summary>
-    internal static unsafe void RegisterAssemblies<TPlatform, TString, TArray, TMonoManager>(
-        TPlatform platform,
-        AssemblyInfo[] infos
-    )
+    internal static unsafe void RegisterAssemblies<
+        TPlatform,
+        TString,
+        TStringArray,
+        TIntArray,
+        TPtrArray,
+        TMonoManager
+    >(TPlatform platform, AssemblyInfo[] infos)
         where TPlatform : IPlatform<TString>
         where TString : unmanaged
-        where TArray : unmanaged, IDynamicArrayOps
-        where TMonoManager : unmanaged, IMonoManager<TArray>
+        where TStringArray : unmanaged, IDynamicArray<TString>
+        where TIntArray : unmanaged, IDynamicArray<int>
+        where TPtrArray : unmanaged, IDynamicArray<IntPtr>
+        where TMonoManager : unmanaged, IMonoManager<TString, TStringArray, TIntArray, TPtrArray>
     {
         if (infos == null)
             throw new ArgumentNullException(nameof(infos));
@@ -135,7 +141,7 @@ internal static class SerializationFix
             );
 
         int defaultType = 0;
-        ref TArray typesArr = ref mgr->AssemblyTypes;
+        ref TIntArray typesArr = ref mgr->AssemblyTypes;
         if (typesArr.Size > 0 && typesArr.Ptr != IntPtr.Zero)
         {
             int* existing = (int*)typesArr.Ptr;
@@ -163,9 +169,63 @@ internal static class SerializationFix
             paths[i] = -1;
         }
 
-        mgr->AssemblyNames.Append(names);
-        mgr->AssemblyTypes.Append(types);
-        mgr->ScriptImages.Append(images);
-        mgr->AssemblyMonoPathsIndex.Append(paths);
+        Append(ref mgr->AssemblyNames, names);
+        Append(ref mgr->AssemblyTypes, types);
+        Append(ref mgr->ScriptImages, images);
+        Append(ref mgr->AssemblyMonoPathsIndex, paths);
+    }
+
+    /// <summary>
+    /// Append a sequence of elements to a Unity <c>dynamic_array&lt;T&gt;</c>.
+    /// Always reallocates a fresh buffer and memcpys the existing contents.
+    /// The new buffer is marked borrowed (low bit of capacity = 1) so
+    /// Unity's <c>~dynamic_array</c> skips both per-element destruction and
+    /// the buffer free. The previous pointer is intentionally leaked -
+    /// Unity allocated it via a MemLabelId-aware allocator we cannot match
+    /// from C#.
+    ///
+    /// Capacity stores the raw count with the LSB as flag (verified against
+    /// the move ctor at UnityPlayer.dll +0x134DB0 which copies it verbatim).
+    /// We round the allocation up to <c>(newSize | 1)</c> so the 1-slot
+    /// slack implied by an even newSize is real backing memory, in case any
+    /// code path treats capacity literally and writes past size. Caller
+    /// must ensure no other code is concurrently reading the array.
+    /// </summary>
+    private static unsafe void Append<TArray, T>(ref TArray array, T[] values)
+        where TArray : unmanaged, IDynamicArray<T>
+        where T : unmanaged
+    {
+        if (values == null)
+            throw new ArgumentNullException(nameof(values));
+        if (values.Length == 0)
+            return;
+
+        int elemSize = sizeof(T);
+        ulong oldSize = array.Size;
+        IntPtr oldPtr = array.Ptr;
+        ulong addCount = (ulong)values.Length;
+        ulong newSize = oldSize + addCount;
+        ulong newCapacity = newSize | 1UL;
+        long bytes = checked((long)newCapacity * elemSize);
+        IntPtr newBuf = Marshal.AllocHGlobal((IntPtr)bytes);
+
+        if (oldPtr != IntPtr.Zero && oldSize > 0)
+        {
+            Buffer.MemoryCopy((void*)oldPtr, (void*)newBuf, bytes, (long)oldSize * elemSize);
+        }
+
+        fixed (T* src = values)
+        {
+            Buffer.MemoryCopy(
+                src,
+                (byte*)newBuf + (long)oldSize * elemSize,
+                bytes - (long)oldSize * elemSize,
+                (long)addCount * elemSize
+            );
+        }
+
+        array.Ptr = newBuf;
+        array.Size = newSize;
+        array.Capacity = newCapacity;
     }
 }

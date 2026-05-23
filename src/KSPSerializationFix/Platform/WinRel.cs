@@ -19,19 +19,25 @@ internal static class WinRel
     /// serialization-fix patcher touches are mapped; remaining bytes are opaque.
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 624)]
-    internal struct MonoManager : IMonoManager<Release.DynamicArray>
+    internal struct MonoManager
+        : IMonoManager<
+            Release.BasicString,
+            Release.DynamicArray<Release.BasicString>,
+            Release.DynamicArray<int>,
+            Release.DynamicArray<IntPtr>
+        >
     {
         [FieldOffset(0x1B0)]
-        public Release.DynamicArray m_AssemblyNames;
+        public Release.DynamicArray<Release.BasicString> m_AssemblyNames;
 
         [FieldOffset(0x1D0)]
-        public Release.DynamicArray m_AssemblyTypes;
+        public Release.DynamicArray<int> m_AssemblyTypes;
 
         [FieldOffset(0x1F0)]
-        public Release.DynamicArray m_ScriptImages;
+        public Release.DynamicArray<IntPtr> m_ScriptImages;
 
         [FieldOffset(0x218)]
-        public Release.DynamicArray m_AssemblyMonoPathsIndex;
+        public Release.DynamicArray<int> m_AssemblyMonoPathsIndex;
 
         [FieldOffset(0x248)]
         public byte m_AreAssembliesLoaded;
@@ -41,16 +47,17 @@ internal static class WinRel
         public bool AreAssembliesLoaded => m_AreAssembliesLoaded != 0;
 
         [UnscopedRef]
-        public ref Release.DynamicArray AssemblyNames => ref m_AssemblyNames;
+        public ref Release.DynamicArray<Release.BasicString> AssemblyNames => ref m_AssemblyNames;
 
         [UnscopedRef]
-        public ref Release.DynamicArray AssemblyTypes => ref m_AssemblyTypes;
+        public ref Release.DynamicArray<int> AssemblyTypes => ref m_AssemblyTypes;
 
         [UnscopedRef]
-        public ref Release.DynamicArray ScriptImages => ref m_ScriptImages;
+        public ref Release.DynamicArray<IntPtr> ScriptImages => ref m_ScriptImages;
 
         [UnscopedRef]
-        public ref Release.DynamicArray AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
+        public ref Release.DynamicArray<int> AssemblyMonoPathsIndex =>
+            ref m_AssemblyMonoPathsIndex;
     }
 
     // Function / global RVAs in UnityPlayer.dll (image base 0x180000000).
@@ -93,7 +100,9 @@ internal static class WinRel
         SerializationFix.RegisterAssemblies<
             Platform,
             Release.BasicString,
-            Release.DynamicArray,
+            Release.DynamicArray<Release.BasicString>,
+            Release.DynamicArray<int>,
+            Release.DynamicArray<IntPtr>,
             MonoManager
         >(default, infos);
 }
