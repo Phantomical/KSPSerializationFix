@@ -61,8 +61,7 @@ internal static class LinuxRel
         public ref Release.DynamicArray<IntPtr> ScriptImages => ref m_ScriptImages;
 
         [UnscopedRef]
-        public ref Release.DynamicArray<int> AssemblyMonoPathsIndex =>
-            ref m_AssemblyMonoPathsIndex;
+        public ref Release.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
     // Function / global RVAs in UnityPlayer.so (image base 0x0).

@@ -53,8 +53,7 @@ internal static class MacRel
         public ref Release.DynamicArray<IntPtr> ScriptImages => ref m_ScriptImages;
 
         [UnscopedRef]
-        public ref Release.DynamicArray<int> AssemblyMonoPathsIndex =>
-            ref m_AssemblyMonoPathsIndex;
+        public ref Release.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
     // Function / global RVAs in UnityPlayer.dylib (image base 0x0).

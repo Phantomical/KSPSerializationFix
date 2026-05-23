@@ -56,8 +56,7 @@ internal static class WinRel
         public ref Release.DynamicArray<IntPtr> ScriptImages => ref m_ScriptImages;
 
         [UnscopedRef]
-        public ref Release.DynamicArray<int> AssemblyMonoPathsIndex =>
-            ref m_AssemblyMonoPathsIndex;
+        public ref Release.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
     // Function / global RVAs in UnityPlayer.dll (image base 0x180000000).
