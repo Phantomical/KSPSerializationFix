@@ -59,20 +59,8 @@ internal static class WinRel
         public ref Release.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
-    // Function / global RVAs in UnityPlayer.dll (image base 0x180000000).
+    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.dll (image base 0x180000000).</summary>
     public const long RvaGetMonoManager = 0x008B13A0;
-    public const long RvaGetManagerFromContext = 0x0058E190;
-    public const long RvaGetManagerContext = 0x0058E180;
-    public const long RvaIsManagerContextAvailable = 0x0058E5A0;
-    public const long RvaGContext = 0x017CD640;
-
-    // MonoManager field offsets (also exposed as plain constants for non-struct callers).
-    public const int OffAssemblyNames = 0x1B0;
-    public const int OffAssemblyTypes = 0x1D0;
-    public const int OffScriptImages = 0x1F0;
-    public const int OffAssemblyMonoPathsIndex = 0x218;
-    public const int OffAreAssembliesLoaded = 0x248;
-    public const int OffScriptingImageCache = 0x250;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate IntPtr GetMonoManagerDelegate();

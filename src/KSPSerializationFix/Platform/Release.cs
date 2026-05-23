@@ -87,20 +87,6 @@ internal static class Release
         }
     }
 
-    // dynamic_array<T> internal layout
-    public const int DynArraySizeof = 32;
-    public const int DynArrayPtrOff = 0x00;
-    public const int DynArrayLabelOff = 0x08;
-    public const int DynArraySizeOff = 0x10;
-    public const int DynArrayCapOff = 0x18;
-
-    // basic_string internal layout
-    public const int BasicStringSizeof = 40;
-    public const int BasicStringDataOff = 0x00;
-    public const int BasicStringCapOff = 0x08; // heap mode (SSO buffer overlaps)
-    public const int BasicStringSizeOff = 0x18;
-    public const int BasicStringLabelOff = 0x20;
-
     /// <summary>Default MemLabelId fallback (kMemString) if no existing string slot can be sampled.</summary>
     public const int FallbackStringLabel = 0x48;
 }

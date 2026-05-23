@@ -64,20 +64,8 @@ internal static class LinuxRel
         public ref Release.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
-    // Function / global RVAs in UnityPlayer.so (image base 0x0).
+    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.so (image base 0x0).</summary>
     public const long RvaGetMonoManager = 0x00AEABC0;
-    public const long RvaGetManagerFromContext = 0x0078D310;
-    public const long RvaGetManagerContext = 0x0078D350;
-    public const long RvaIsManagerContextAvailable = 0x0078D2F0;
-    public const long RvaGContext = 0x02060FC0;
-
-    // MonoManager field offsets.
-    public const int OffAssemblyNames = 0x1A8;
-    public const int OffAssemblyTypes = 0x1C8;
-    public const int OffScriptImages = 0x1E8;
-    public const int OffAssemblyMonoPathsIndex = 0x210;
-    public const int OffAreAssembliesLoaded = 0x240;
-    public const int OffScriptingImageCache = 0x248;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate IntPtr GetMonoManagerDelegate();

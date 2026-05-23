@@ -56,20 +56,8 @@ internal static class MacRel
         public ref Release.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
-    // Function / global RVAs in UnityPlayer.dylib (image base 0x0).
+    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.dylib (image base 0x0).</summary>
     public const long RvaGetMonoManager = 0x0087E0A0;
-    public const long RvaGetManagerFromContext = 0x004C9CE0;
-    public const long RvaGetManagerContext = 0x004C9D60;
-    public const long RvaIsManagerContextAvailable = 0x004C9CC0;
-    public const long RvaGContext = 0x0189A990;
-
-    // MonoManager field offsets.
-    public const int OffAssemblyNames = 0x1A8;
-    public const int OffAssemblyTypes = 0x1C8;
-    public const int OffScriptImages = 0x1E8;
-    public const int OffAssemblyMonoPathsIndex = 0x210;
-    public const int OffAreAssembliesLoaded = 0x240;
-    public const int OffScriptingImageCache = 0x248;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate IntPtr GetMonoManagerDelegate();

@@ -59,20 +59,8 @@ internal static class LinuxDbg
         public ref Debug.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
-    // Function / global RVAs in UnityPlayer.so (image base 0x0).
+    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.so (image base 0x0).</summary>
     public const long RvaGetMonoManager = 0x01378BA0;
-    public const long RvaGetManagerFromContext = 0x00B88E70;
-    public const long RvaGetManagerContext = 0x00B88EB0;
-    public const long RvaIsManagerContextAvailable = 0x00B88E50;
-    public const long RvaGContext = 0x02E89800;
-
-    // MonoManager field offsets.
-    public const int OffAssemblyNames = 0x1D8;
-    public const int OffAssemblyTypes = 0x200;
-    public const int OffScriptImages = 0x228;
-    public const int OffAssemblyMonoPathsIndex = 0x258;
-    public const int OffAreAssembliesLoaded = 0x290;
-    public const int OffScriptingImageCache = 0x298;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate IntPtr GetMonoManagerDelegate();

@@ -56,20 +56,8 @@ internal static class WinDbg
         public ref Debug.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
-    // Function / global RVAs in UnityPlayer.dll (image base 0x180000000).
+    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.dll (image base 0x180000000).</summary>
     public const long RvaGetMonoManager = 0x0116E8F0;
-    public const long RvaGetManagerFromContext = 0x0079DE60;
-    public const long RvaGetManagerContext = 0x0079DE50;
-    public const long RvaIsManagerContextAvailable = 0x0079E2C0;
-    public const long RvaGContext = 0x02879CA0;
-
-    // MonoManager field offsets.
-    public const int OffAssemblyNames = 0x1E0;
-    public const int OffAssemblyTypes = 0x208;
-    public const int OffScriptImages = 0x230;
-    public const int OffAssemblyMonoPathsIndex = 0x260;
-    public const int OffAreAssembliesLoaded = 0x298;
-    public const int OffScriptingImageCache = 0x2A0;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate IntPtr GetMonoManagerDelegate();

@@ -91,20 +91,6 @@ internal static class Debug
         }
     }
 
-    // dynamic_array<T> internal layout (dev)
-    public const int DynArraySizeof = 40;
-    public const int DynArrayPtrOff = 0x00;
-    public const int DynArrayLabelOff = 0x10;
-    public const int DynArraySizeOff = 0x18;
-    public const int DynArrayCapOff = 0x20;
-
-    // basic_string internal layout (dev)
-    public const int BasicStringSizeof = 48;
-    public const int BasicStringDataOff = 0x00;
-    public const int BasicStringCapOff = 0x08;
-    public const int BasicStringSizeOff = 0x18;
-    public const int BasicStringLabelOff = 0x28;
-
     /// <summary>Default MemLabelId fallback (kMemString) if no existing string slot can be sampled.</summary>
     public const int FallbackStringLabel = 0x48;
 }
