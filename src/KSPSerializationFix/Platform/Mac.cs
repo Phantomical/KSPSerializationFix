@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 
 namespace KSPSerializationFix.Platform;
 
-public static class Mac
+internal static class Mac
 {
     /// <summary>Module basename matched against _dyld_get_image_name (suffix match).</summary>
     public const string UnityPlayerModule = "UnityPlayer.dylib";

@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace KSPSerializationFix.Platform;
 
-public static class Windows
+internal static class Windows
 {
     /// <summary>Module basename for the running UnityPlayer in this process.</summary>
     public const string UnityPlayerModule = "UnityPlayer.dll";
