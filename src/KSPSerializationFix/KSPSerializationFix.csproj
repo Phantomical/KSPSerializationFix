@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>KSPSerializationFix</AssemblyName>
+    <RootNamespace>KSPSerializationFix</RootNamespace>
+    <TargetFramework>net481</TargetFramework>
+
+    <Description>Fixes for KSP's stock serialization system</Description>
+    <Company>Phantomical</Company>
+    <Product>KSPSerializationFix</Product>
+    <Copyright>Copyright © Sean Lynch 2026</Copyright>
+
+    <KSPBT_ModRoot>$(ProjectRootDir)GameData\000_SerializationFix</KSPBT_ModRoot>
+    <KSPBT_ModPluginFolder>Plugin</KSPBT_ModPluginFolder>
+
+    <LangVersion>12</LangVersion>
+    <DebugType>portable</DebugType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+
+    <!-- Generate a nuget lockfile so dependencies can be cached in CI -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(KSPBT_ModVersion)' != '' ">
+    <Version>$(KSPBT_ModVersion)</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KSPBuildTools" Version="1.1.1" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <AssemblyMetadata Include="HotReload" Value="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <KSPVersionFile Include="KSPSerializationFix.version">
+      <Destination>$(KSPBT_ModRoot)/KSPSerializationFix.version</Destination>
+      <KSP_Version>1.12.5</KSP_Version>
+      <KSP_Version_Min>1.12.5</KSP_Version_Min>
+      <KSP_Version_Max>1.12.99</KSP_Version_Max>
+    </KSPVersionFile>
+  </ItemGroup>
+
+  <Target Name="CopyExtrasToPluginFolder" AfterTargets="KSPBT_CopyDLLsToPluginFolder">
+    <ItemGroup>
+      <_ExtrasToCopy Include="$(TargetDir)/**/*.xml" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_ExtrasToCopy)" DestinationFolder="$(KSPBT_ModRoot)/$(KSPBT_ModPluginFolder)/%(RecursiveDir)" />
+  </Target>
+
+  <!--
+    Copy GameData content (cfg files, localization, assets, etc.) from src/GameData
+    into the staged mod folder at GameData/KSPSerializationFix.
+  -->
+  <Target Name="CopyGameDataContent" AfterTargets="CopyFilesToOutputDirectory">
+    <ItemGroup>
+      <_GameDataContent Include="$(ProjectRootDir)src\GameData\**\*.*" Exclude="$(ProjectRootDir)src\GameData\**\.gitkeep" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_GameDataContent)" DestinationFolder="$(KSPBT_ModRoot)\%(RecursiveDir)" />
+  </Target>
+
+  <!--
+    It's really easy for old binaries or content files to stick around in
+    GameData. This step makes sure that doesn't happen.
+  -->
+  <Target Name="GameDataPostClean" AfterTargets="Clean">
+    <RemoveDir Directories="$(KSPBT_ModRoot)" />
+    <!--
+      KSP gets borked if there are invalid junctions in GameData. Recreate the
+      directory after deleting it so any junction pointing to it stays valid.
+    -->
+    <MakeDir Directories="$(KSPBT_ModRoot)" />
+  </Target>
+</Project>

@@ -1,0 +1,41 @@
+name: release
+
+on:
+  release:
+    types:
+      - published
+
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+
+jobs:
+  build:
+    uses: ./.github/workflows/ci.yml
+
+  upload-release-assets:
+    runs-on: ubuntu-latest
+    needs: [build]
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: KSPSerializationFix
+          path: KSPSerializationFix
+      - uses: actions/download-artifact@v4
+        with:
+          name: KSPSerializationFix.version
+      - run: tree
+
+      - name: Create Zip
+        run: |
+          cd KSPSerializationFix
+          zip -r9 ../KSPSerializationFix.zip *
+
+      - name: Upload Release Assets
+        run: |
+          gh release upload --clobber ${{ github.ref_name }}  \
+            KSPSerializationFix.zip                           \
+            KSPSerializationFix.version
