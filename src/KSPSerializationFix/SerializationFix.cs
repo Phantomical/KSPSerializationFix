@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using KSPSerializationFix.Platform;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -61,6 +62,14 @@ internal struct AssemblyInfo
 {
     public IntPtr image;
     public string name;
+}
+
+internal enum AssemblyType : int
+{
+    User = 0,
+    Internal = 1,
+    System = 2,
+    Editor = 3,
 }
 
 internal sealed class UnsupportedPlatformException(string message) : Exception(message) { }
@@ -140,14 +149,6 @@ internal static class SerializationFix
                 "MonoManager assemblies not loaded yet; called too early"
             );
 
-        int defaultType = 0;
-        ref TIntArray typesArr = ref mgr->AssemblyTypes;
-        if (typesArr.Size > 0 && typesArr.Ptr != IntPtr.Zero)
-        {
-            int* existing = (int*)typesArr.Ptr;
-            defaultType = existing[typesArr.Size - 1];
-        }
-
         var names = new TString[infos.Length];
         var types = new int[infos.Length];
         var images = new IntPtr[infos.Length];
@@ -164,7 +165,7 @@ internal static class SerializationFix
             Marshal.WriteByte(buf, utf8.Length, 0);
 
             names[i] = platform.CreateString(buf, utf8.Length);
-            types[i] = defaultType;
+            types[i] = (int)AssemblyType.User;
             images[i] = infos[i].image;
             paths[i] = -1;
         }
@@ -176,20 +177,7 @@ internal static class SerializationFix
     }
 
     /// <summary>
-    /// Append a sequence of elements to a Unity <c>dynamic_array&lt;T&gt;</c>.
-    /// Always reallocates a fresh buffer and memcpys the existing contents.
-    /// The new buffer is marked borrowed (low bit of capacity = 1) so
-    /// Unity's <c>~dynamic_array</c> skips both per-element destruction and
-    /// the buffer free. The previous pointer is intentionally leaked -
-    /// Unity allocated it via a MemLabelId-aware allocator we cannot match
-    /// from C#.
-    ///
-    /// Capacity stores the raw count with the LSB as flag (verified against
-    /// the move ctor at UnityPlayer.dll +0x134DB0 which copies it verbatim).
-    /// We round the allocation up to <c>(newSize | 1)</c> so the 1-slot
-    /// slack implied by an even newSize is real backing memory, in case any
-    /// code path treats capacity literally and writes past size. Caller
-    /// must ensure no other code is concurrently reading the array.
+    /// Our own implementation of <c>basic_array&lt;T&gt;::append</c>.
     /// </summary>
     private static unsafe void Append<TArray, T>(ref TArray array, T[] values)
         where TArray : unmanaged, IDynamicArray<T>
@@ -200,27 +188,34 @@ internal static class SerializationFix
         if (values.Length == 0)
             return;
 
-        int elemSize = sizeof(T);
         ulong oldSize = array.Size;
         IntPtr oldPtr = array.Ptr;
         ulong addCount = (ulong)values.Length;
         ulong newSize = oldSize + addCount;
+
+        // Unity's dynamic_array considers an odd capacity to mean
+        // "this array is borrowed and should not be freed."
+        //
+        // We're using an entirely different allocator from what unity uses, so
+        // we make sure to put the array in a state that is considered to be
+        // borrowed.
         ulong newCapacity = newSize | 1UL;
-        long bytes = checked((long)newCapacity * elemSize);
+        long bytes = (long)newCapacity * sizeof(T);
         IntPtr newBuf = Marshal.AllocHGlobal((IntPtr)bytes);
+        if (newBuf == IntPtr.Zero)
+            throw new OutOfMemoryException("failed to allocate memory");
 
         if (oldPtr != IntPtr.Zero && oldSize > 0)
         {
-            Buffer.MemoryCopy((void*)oldPtr, (void*)newBuf, bytes, (long)oldSize * elemSize);
+            UnsafeUtility.MemCpy((void*)newBuf, (void*)oldPtr, (long)oldSize * sizeof(T));
         }
 
         fixed (T* src = values)
         {
-            Buffer.MemoryCopy(
+            UnsafeUtility.MemCpy(
+                (byte*)newBuf + (long)oldSize * sizeof(T),
                 src,
-                (byte*)newBuf + (long)oldSize * elemSize,
-                bytes - (long)oldSize * elemSize,
-                (long)addCount * elemSize
+                (long)addCount * sizeof(T)
             );
         }
 
