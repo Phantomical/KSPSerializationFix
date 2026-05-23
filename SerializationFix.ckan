@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/KSP-CKAN/CKAN/refs/heads/master/CKAN.schema
+
+name: SerializationFix
+
+tags:
+  - plugin
