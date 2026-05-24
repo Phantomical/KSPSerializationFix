@@ -2,9 +2,7 @@
 // MonoImage* that backs it. Two steps:
 //
 //   1. Every managed Assembly under Mono stores its native MonoAssembly* in an
-//      IntPtr field named "_mono_assembly" on System.Reflection.Assembly. The
-//      field is internal in mscorlib, so we use Krafs.Publicizer to expose it
-//      at compile time (see KSPSerializationFix.csproj).
+//      IntPtr field named "_mono_assembly" on System.Reflection.Assembly.
 //   2. mono_assembly_get_image(MonoAssembly*) returns the MonoImage*. This is
 //      a public Mono C API exported by the mono runtime library that Unity
 //      loaded into the process.
@@ -13,11 +11,10 @@
 //   - Windows: MonoBleedingEdge\EmbedRuntime\mono-2.0-bdwgc.dll
 //   - Linux:   Data/MonoBleedingEdge/x86_64/libmonobdwgc-2.0.so
 //   - macOS:   .../Contents/Frameworks/libmonobdwgc-2.0.dylib
-// .NET's DllImport resolver prepends "lib" / appends ".so"/".dylib" on
-// Unix-like platforms, so a single "monobdwgc-2.0" string covers Linux and
-// macOS. Windows uses "mono-2.0-bdwgc" (note the reordering: bdwgc as a
-// suffix on Unix, mono-prefix on Windows). LoadLibrary will find the already-
-// loaded module by basename even though Unity loaded it from a subdirectory.
+//
+// This shakes out to a unix binding and a windows binding for the function.
+// Since the library has already been loaded then it will be resolved appropriately,
+// even though we aren't shipping it ourselves.
 
 using System;
 using System.Reflection;

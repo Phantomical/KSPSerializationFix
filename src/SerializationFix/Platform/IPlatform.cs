@@ -4,11 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace KSPSerializationFix.Platform;
 
 /// <summary>
-/// Variant-agnostic accessors for a Unity <c>dynamic_array&lt;T&gt;</c>.
-/// The three mutable header fields are exposed as ref-returning properties
-/// so the single generic Append implementation in
-/// <see cref="SerializationFix"/> can realloc and write back without
-/// knowing the per-variant struct layout.
+/// Interface for a Unity <c>dynamic_array&lt;T&gt;</c>.
 /// </summary>
 internal interface IDynamicArray<T>
     where T : unmanaged
