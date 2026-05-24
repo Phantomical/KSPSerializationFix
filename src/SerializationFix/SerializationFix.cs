@@ -13,25 +13,29 @@ using UnityEngine.Profiling;
 
 // Making serialization work for arbitrary DLLs
 // ============================================
-// When Unity goes to serialize a type it looks up its info from a list of DLLs
-// that are baked into release bundle that is made for the game. This means that
-// [Serializable] doesn't work for any DLLs other than the ones included in that
-// built-in list.
+// When Unity wants to serialize a [Serializable] type it looks up info from
+// a list of assemblies that is baked into the release bundle. This means that
+// it doesn't work for any assemblies other than the ones included in that list.
 //
 // We would like to change that.
 //
-// In order to do that we need to somehow reach in and change that internal
-// array. Luckily, for KSP we can get away with only supporting exactly one
-// version of unity - 2019.4.18f1, which means that we can hardcode offsets
-// to internal methods and properties.
+// To do so we need to reach into the unity internals and change that list to
+// include the appropriate assemblies. None of this is exposed, but we can
+// restrict ourselves to only working with Unity 2019.4.18f1 along with a
+// limited set of platforms so this all ends up being manageable.
 //
-// Within Unity there is a MonoManager class that holds a couple of arrays
-// that are how unity finds the relevant assembly. We access that by forging
-// a function pointer to the internal GetMonoManager function, then calling
-// it. Once we have that, we can append the appropriate data for the assembly
-// to 4 dynamic_array<T> fields within MonoManager.
+// Internally the list we need to modify lives on a type called MonoManager.
+// As a bonus it isn't actually one list, instead it is actually 4 different
+// ones. The ones we care about are all some variant of Unity's internal
+// dynamic_array<T> type.
 //
-// These are:
+// To get access to the global MonoManager instance, we need to call an internal
+// unity method called GetMonoManager. This isn't exported (except possibly on
+// MacOS?), so we instead assemble its function pointer by adding a known offset
+// to the UnityPlayer base address. What offset we use depends on the platform
+// and whether we are working with a debug or release build of the player.
+//
+// The MonoManager fields we care about are:
 // 1. dynamic_array<basic_string> m_AssemblyNames
 //
 //    This contains the display/lookup names of every assemly in the list.
@@ -60,6 +64,12 @@ using UnityEngine.Profiling;
 //
 // As long as nothing has been serialized for an assembly we can modify this
 // and it will transparently be picked up by unity.
+//
+// To tie it all together all we need to do is:
+// 1. Get a pointer to unity's global MonoManager instance
+// 2. Append new entries to each of the 4 internal arrays for the new assemblies.
+// 3. ???
+// 4. ~~Profit~~ serialize stuff
 
 namespace KSPSerializationFix;
 
