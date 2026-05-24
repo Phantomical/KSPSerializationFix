@@ -7,14 +7,9 @@
 //      a public Mono C API exported by the mono runtime library that Unity
 //      loaded into the process.
 //
-// The mono library Unity ships has different basenames on different platforms:
-//   - Windows: MonoBleedingEdge\EmbedRuntime\mono-2.0-bdwgc.dll
-//   - Linux:   Data/MonoBleedingEdge/x86_64/libmonobdwgc-2.0.so
-//   - macOS:   .../Contents/Frameworks/libmonobdwgc-2.0.dylib
-//
-// This shakes out to a unix binding and a windows binding for the function.
-// Since the library has already been loaded then it will be resolved appropriately,
-// even though we aren't shipping it ourselves.
+// How we reach mono_assembly_get_image varies by platform; see the per-class
+// comments below. Each binding lives in its own nested class so we only ever
+// try to resolve the symbol from the source that matches the current platform.
 
 using System;
 using System.Reflection;
@@ -40,31 +35,39 @@ internal static class Mono
                 $"Assembly {assembly.FullName} had a null _mono_assembly field"
             );
 
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            return WindowsMono.mono_assembly_get_image(assembly._mono_assembly);
-        return UnixMono.mono_assembly_get_image(assembly._mono_assembly);
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return LinuxMono.mono_assembly_get_image(assembly._mono_assembly);
+
+        return InternalMono.mono_assembly_get_image(assembly._mono_assembly);
     }
 
-    // The DLLImport methods are in nested classes so we only try to load the
-    // one that is actually needed for the current platform.
-
-    private static class WindowsMono
+    // On Windows and MacOS we can just use __Internal to resolve the symbol
+    // against the loaded libraries in the current process.
+    private static class InternalMono
     {
         [DllImport(
-            "mono-2.0-bdwgc",
+            "__Internal",
             EntryPoint = "mono_assembly_get_image",
             CallingConvention = CallingConvention.Cdecl
         )]
         public static extern IntPtr mono_assembly_get_image(IntPtr monoAssembly);
     }
 
-    private static class UnixMono
+    // __Internal doesn't seem to work on linux, so we manually get a handle to
+    // libmono and call dlsym to get the function pointer ourselves.
+    private static class LinuxMono
     {
-        [DllImport(
-            "monobdwgc-2.0",
-            EntryPoint = "mono_assembly_get_image",
-            CallingConvention = CallingConvention.Cdecl
-        )]
-        public static extern IntPtr mono_assembly_get_image(IntPtr monoAssembly);
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        private delegate IntPtr MonoAssemblyGetImage(IntPtr monoAssembly);
+
+        private static readonly MonoAssemblyGetImage _fn = Resolve();
+
+        public static IntPtr mono_assembly_get_image(IntPtr monoAssembly) => _fn(monoAssembly);
+
+        private static MonoAssemblyGetImage Resolve()
+        {
+            IntPtr sym = Platform.Linux.Native.GetMonoFunctionPointer("mono_assembly_get_image");
+            return Marshal.GetDelegateForFunctionPointer<MonoAssemblyGetImage>(sym);
+        }
     }
 }

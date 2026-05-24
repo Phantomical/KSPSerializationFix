@@ -1,23 +1,24 @@
-// Linux debug (development) Unity 2019.4.18f1 player layout.
-// Variation: linux64_withgfx_development_mono.
+// macOS debug (development) Unity 2019.4.18f1 player layout.
+// Variation: macosx64_development_mono.
 //
-// Field offsets recovered by Ghidra disassembly of MonoManager::BeginReloadAssembly
-// and MonoManager::LoadAssemblies; layout matches MacDbg exactly (Itanium ABI
-// + dev MemLabelId expansion). Embedded dynamic_array / basic_string layouts
-// are shared across dev variants - see Debug.cs.
+// Unity does not ship a dSYM for the dev variant, so field offsets were
+// recovered by Ghidra disassembly of MonoManager::BeginReloadAssembly and
+// MonoManager::LoadAssemblies. Layout matches LinuxDbg exactly.
+//
+// sizeof(MonoManager) is not directly verified; 696 is extrapolated from
+// WinDbg's hash_map size delta over its non-dev counterpart. Embedded
+// dynamic_array / basic_string layouts are shared across dev variants -
+// see Debug.cs.
 
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
-namespace KSPSerializationFix.Platform;
+namespace KSPSerializationFix.Platform.Mac;
 
-internal static class LinuxDbg
+internal static class MacDbg
 {
-    /// <summary>
-    /// MonoManager - field offsets match MacDbg exactly. sizeof not directly
-    /// verified; 696 extrapolated from WinDbg's hash_map size delta.
-    /// </summary>
+    /// <summary>MonoManager - sizeof 696 (approximate).</summary>
     [StructLayout(LayoutKind.Explicit, Size = 696)]
     public struct MonoManager
         : IMonoManager<
@@ -42,7 +43,7 @@ internal static class LinuxDbg
         [FieldOffset(0x290)]
         public byte m_AreAssembliesLoaded;
 
-        // +0x298: core::hash_map<basic_string, ScriptingImagePtr> m_ScriptingImageCache
+        // +0x298: core::hash_map<basic_string, ScriptingImagePtr> m_ScriptingImageCache (~32 bytes in dev)
 
         public bool AreAssembliesLoaded => m_AreAssembliesLoaded != 0;
 
@@ -59,14 +60,14 @@ internal static class LinuxDbg
         public ref Debug.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
-    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.so (image base 0x0).</summary>
-    public const long RvaGetMonoManager = 0x01378BA0;
+    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.dylib (image base 0x0).</summary>
+    public const long RvaGetMonoManager = 0x0107D590;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate IntPtr GetMonoManagerDelegate();
 
     /// <summary>
-    /// Strategy struct plugging the LinuxDbg variant into the generic
+    /// Strategy struct plugging the MacDbg variant into the generic
     /// SerializationFix.RegisterAssemblies pipeline.
     /// </summary>
     internal readonly struct Platform : IPlatform<Debug.BasicString>
@@ -75,7 +76,7 @@ internal static class LinuxDbg
 
         public IntPtr GetMonoManagerPointer()
         {
-            IntPtr fnPtr = Linux.GetUnityPlayerFunctionPointer(RvaGetMonoManager);
+            IntPtr fnPtr = Native.GetUnityPlayerFunctionPointer(RvaGetMonoManager);
             if (fnPtr == IntPtr.Zero)
                 return IntPtr.Zero;
             var fn = Marshal.GetDelegateForFunctionPointer<GetMonoManagerDelegate>(fnPtr);

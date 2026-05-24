@@ -1,25 +1,30 @@
-// Windows release (non-development) Unity 2019.4.18f1 player layout.
-// Verified from UnityPlayer_Win64_mono_x64.pdb
-// (GUID 41E8D80F-828B-4CEC-840B-0E4C0496BCCF, age 1).
+// Linux release (non-development) Unity 2019.4.18f1 player layout.
+// Variation: linux64_withgfx_nondevelopment_mono.
 //
-// MSVC ABI: 8-byte empty-base padding inflates MonoManager vs Itanium ABI.
-// Embedded dynamic_array / basic_string layouts are shared across release
-// variants - see Release.cs.
+// Unity strips DWARF type info from Linux player builds; field offsets were
+// recovered by Ghidra disassembly of MonoManager::BeginReloadAssembly and
+// MonoManager::LoadAssemblies in UnityPlayer.so (build-id
+// 837d925b00ed85912e7d3152aa0ad3bd6d9b4c2d) and cross-verified against the
+// macOS non-dev dSYM DWARF, which matches exactly (Itanium ABI).
+//
+// MonoManager fields are 8 bytes earlier than WinRel because Itanium ABI
+// elides the empty-base padding MSVC inserts. Embedded dynamic_array /
+// basic_string layouts are shared across release variants - see Release.cs.
 
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
-namespace KSPSerializationFix.Platform;
+namespace KSPSerializationFix.Platform.Linux;
 
-internal static class WinRel
+internal static class LinuxRel
 {
     /// <summary>
-    /// MonoManager - sizeof 624 (verified from PDB). Only the fields the
-    /// serialization-fix patcher touches are mapped; remaining bytes are opaque.
+    /// MonoManager - field offsets match MacRel exactly (Itanium ABI).
+    /// sizeof not directly verified for Linux; 608 mirrors macOS.
     /// </summary>
-    [StructLayout(LayoutKind.Explicit, Size = 624)]
-    internal struct MonoManager
+    [StructLayout(LayoutKind.Explicit, Size = 608)]
+    public struct MonoManager
         : IMonoManager<
             Release.BasicString,
             Release.DynamicArray<Release.BasicString>,
@@ -27,22 +32,22 @@ internal static class WinRel
             Release.DynamicArray<IntPtr>
         >
     {
-        [FieldOffset(0x1B0)]
+        [FieldOffset(0x1A8)]
         public Release.DynamicArray<Release.BasicString> m_AssemblyNames;
 
-        [FieldOffset(0x1D0)]
+        [FieldOffset(0x1C8)]
         public Release.DynamicArray<int> m_AssemblyTypes;
 
-        [FieldOffset(0x1F0)]
+        [FieldOffset(0x1E8)]
         public Release.DynamicArray<IntPtr> m_ScriptImages;
 
-        [FieldOffset(0x218)]
+        [FieldOffset(0x210)]
         public Release.DynamicArray<int> m_AssemblyMonoPathsIndex;
 
-        [FieldOffset(0x248)]
+        [FieldOffset(0x240)]
         public byte m_AreAssembliesLoaded;
 
-        // +0x250: core::hash_map<basic_string, ScriptingImagePtr> m_ScriptingImageCache (~32 bytes)
+        // +0x248: core::hash_map<basic_string, ScriptingImagePtr> m_ScriptingImageCache
 
         public bool AreAssembliesLoaded => m_AreAssembliesLoaded != 0;
 
@@ -59,14 +64,14 @@ internal static class WinRel
         public ref Release.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
-    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.dll (image base 0x180000000).</summary>
-    public const long RvaGetMonoManager = 0x008B13A0;
+    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.so (image base 0x0).</summary>
+    public const long RvaGetMonoManager = 0x00AEABC0;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate IntPtr GetMonoManagerDelegate();
 
     /// <summary>
-    /// Strategy struct plugging the WinRel variant into the generic
+    /// Strategy struct plugging the LinuxRel variant into the generic
     /// SerializationFix.RegisterAssemblies pipeline.
     /// </summary>
     internal readonly struct Platform : IPlatform<Release.BasicString>
@@ -75,7 +80,7 @@ internal static class WinRel
 
         public IntPtr GetMonoManagerPointer()
         {
-            IntPtr fnPtr = Windows.GetUnityPlayerFunctionPointer(RvaGetMonoManager);
+            IntPtr fnPtr = Native.GetUnityPlayerFunctionPointer(RvaGetMonoManager);
             if (fnPtr == IntPtr.Zero)
                 return IntPtr.Zero;
             var fn = Marshal.GetDelegateForFunctionPointer<GetMonoManagerDelegate>(fnPtr);

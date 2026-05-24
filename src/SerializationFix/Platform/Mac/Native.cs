@@ -10,9 +10,9 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace KSPSerializationFix.Platform;
+namespace KSPSerializationFix.Platform.Mac;
 
-internal static class Mac
+internal static class Native
 {
     /// <summary>Module basename matched against _dyld_get_image_name (suffix match).</summary>
     public const string UnityPlayerModule = "UnityPlayer.dylib";

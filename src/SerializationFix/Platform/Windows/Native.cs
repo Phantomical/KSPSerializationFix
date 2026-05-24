@@ -5,9 +5,9 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace KSPSerializationFix.Platform;
+namespace KSPSerializationFix.Platform.Windows;
 
-internal static class Windows
+internal static class Native
 {
     /// <summary>Module basename for the running UnityPlayer in this process.</summary>
     public const string UnityPlayerModule = "UnityPlayer.dll";

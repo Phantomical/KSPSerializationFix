@@ -1,22 +1,25 @@
-// Windows debug (development) Unity 2019.4.18f1 player layout.
-// Verified from UnityPlayer_Win64_development_mono_x64.pdb
-// (GUID 98FC1713-97AE-49F3-9514-12F65025E2AB, age 1).
+// Linux debug (development) Unity 2019.4.18f1 player layout.
+// Variation: linux64_withgfx_development_mono.
 //
-// MSVC ABI + dev MemLabelId expansion. Every MonoManager field sits 0x30+
-// later than its WinRel counterpart. Embedded dynamic_array / basic_string
-// layouts are shared across dev variants - see Debug.cs.
+// Field offsets recovered by Ghidra disassembly of MonoManager::BeginReloadAssembly
+// and MonoManager::LoadAssemblies; layout matches MacDbg exactly (Itanium ABI
+// + dev MemLabelId expansion). Embedded dynamic_array / basic_string layouts
+// are shared across dev variants - see Debug.cs.
 
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
-namespace KSPSerializationFix.Platform;
+namespace KSPSerializationFix.Platform.Linux;
 
-internal static class WinDbg
+internal static class LinuxDbg
 {
-    /// <summary>MonoManager - sizeof 712 (verified from dev PDB).</summary>
-    [StructLayout(LayoutKind.Explicit, Size = 712)]
-    internal struct MonoManager
+    /// <summary>
+    /// MonoManager - field offsets match MacDbg exactly. sizeof not directly
+    /// verified; 696 extrapolated from WinDbg's hash_map size delta.
+    /// </summary>
+    [StructLayout(LayoutKind.Explicit, Size = 696)]
+    public struct MonoManager
         : IMonoManager<
             Debug.BasicString,
             Debug.DynamicArray<Debug.BasicString>,
@@ -24,22 +27,22 @@ internal static class WinDbg
             Debug.DynamicArray<IntPtr>
         >
     {
-        [FieldOffset(0x1E0)]
+        [FieldOffset(0x1D8)]
         public Debug.DynamicArray<Debug.BasicString> m_AssemblyNames;
 
-        [FieldOffset(0x208)]
+        [FieldOffset(0x200)]
         public Debug.DynamicArray<int> m_AssemblyTypes;
 
-        [FieldOffset(0x230)]
+        [FieldOffset(0x228)]
         public Debug.DynamicArray<IntPtr> m_ScriptImages;
 
-        [FieldOffset(0x260)]
+        [FieldOffset(0x258)]
         public Debug.DynamicArray<int> m_AssemblyMonoPathsIndex;
 
-        [FieldOffset(0x298)]
+        [FieldOffset(0x290)]
         public byte m_AreAssembliesLoaded;
 
-        // +0x2A0: core::hash_map<basic_string, ScriptingImagePtr> m_ScriptingImageCache (~40 bytes in dev)
+        // +0x298: core::hash_map<basic_string, ScriptingImagePtr> m_ScriptingImageCache
 
         public bool AreAssembliesLoaded => m_AreAssembliesLoaded != 0;
 
@@ -56,14 +59,14 @@ internal static class WinDbg
         public ref Debug.DynamicArray<int> AssemblyMonoPathsIndex => ref m_AssemblyMonoPathsIndex;
     }
 
-    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.dll (image base 0x180000000).</summary>
-    public const long RvaGetMonoManager = 0x0116E8F0;
+    /// <summary>RVA of <c>GetMonoManager()</c> in UnityPlayer.so (image base 0x0).</summary>
+    public const long RvaGetMonoManager = 0x01378BA0;
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     private delegate IntPtr GetMonoManagerDelegate();
 
     /// <summary>
-    /// Strategy struct plugging the WinDbg variant into the generic
+    /// Strategy struct plugging the LinuxDbg variant into the generic
     /// SerializationFix.RegisterAssemblies pipeline.
     /// </summary>
     internal readonly struct Platform : IPlatform<Debug.BasicString>
@@ -72,7 +75,7 @@ internal static class WinDbg
 
         public IntPtr GetMonoManagerPointer()
         {
-            IntPtr fnPtr = Windows.GetUnityPlayerFunctionPointer(RvaGetMonoManager);
+            IntPtr fnPtr = Native.GetUnityPlayerFunctionPointer(RvaGetMonoManager);
             if (fnPtr == IntPtr.Zero)
                 return IntPtr.Zero;
             var fn = Marshal.GetDelegateForFunctionPointer<GetMonoManagerDelegate>(fnPtr);

@@ -10,7 +10,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
-namespace KSPSerializationFix.Platform;
+namespace KSPSerializationFix.Platform.Mac;
 
 internal static class MacRel
 {
@@ -72,7 +72,7 @@ internal static class MacRel
 
         public IntPtr GetMonoManagerPointer()
         {
-            IntPtr fnPtr = Mac.GetUnityPlayerFunctionPointer(RvaGetMonoManager);
+            IntPtr fnPtr = Native.GetUnityPlayerFunctionPointer(RvaGetMonoManager);
             if (fnPtr == IntPtr.Zero)
                 return IntPtr.Zero;
             var fn = Marshal.GetDelegateForFunctionPointer<GetMonoManagerDelegate>(fnPtr);
