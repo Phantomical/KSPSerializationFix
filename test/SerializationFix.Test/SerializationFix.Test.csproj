@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+
+    <RootNamespace>KSPSerializationFix.Test</RootNamespace>
+    <TargetFramework>net481</TargetFramework>
+
+    <Description>Verifies that SerializationFix has actually fixed serialization</Description>
+
+    <KSPBT_ModRoot>$(ProjectRootDir)GameData\SerializationFix.Test</KSPBT_ModRoot>
+    <KSPBT_ModPluginFolder>Plugin</KSPBT_ModPluginFolder>
+    <!--
+      No need for a .version file on the test harness; it's not something we
+      ship via CKAN.
+    -->
+    <KSPBT_GenerateVersionFile>false</KSPBT_GenerateVersionFile>
+
+    <LangVersion>14</LangVersion>
+    <DebugType>portable</DebugType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="KSPBuildTools" Version="1.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      The KSPAssemblyName/KSPAssemblyVersion metadata makes KSPBuildTools emit
+      a matching [KSPAssemblyDependency] attribute. That attribute is what
+      causes KSP's AssemblyLoader to add SerializationFix to this assembly's
+      `deps` list, which is what SerializationFix.RegisterDependentAssemblies
+      scans to know which assemblies to fix up.
+    -->
+    <ProjectReference Include="$(ProjectRootDir)src\SerializationFix\SerializationFix.csproj">
+      <KSPAssemblyName>SerializationFix</KSPAssemblyName>
+      <KSPAssemblyVersion>$(Version)</KSPAssemblyVersion>
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <Target Name="CopyExtrasToPluginFolder" AfterTargets="KSPBT_CopyDLLsToPluginFolder">
+    <ItemGroup>
+      <_ExtrasToCopy Include="$(TargetDir)/**/*.xml" />
+    </ItemGroup>
+
+    <Copy
+      SourceFiles="@(_ExtrasToCopy)"
+      DestinationFolder="$(KSPBT_ModRoot)/$(KSPBT_ModPluginFolder)/%(RecursiveDir)"
+    />
+  </Target>
+
+  <Target Name="GameDataPostClean" AfterTargets="Clean">
+    <RemoveDir Directories="$(KSPBT_ModRoot)" />
+    <MakeDir Directories="$(KSPBT_ModRoot)" />
+  </Target>
+</Project>

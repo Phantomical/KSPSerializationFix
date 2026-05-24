@@ -40,8 +40,11 @@ jobs:
           shopt -s nocaseglob # so globs are case-insensitive
           shopt -s globstar
           shopt -s nullglob
-          mkdir -p ${{ env.RELEASE_STAGING  }}
-          cp -r -v GameData README* LICENSE* CHANGELOG* ${{ env.RELEASE_STAGING }}
+          mkdir -p ${{ env.RELEASE_STAGING }}/GameData
+          # Stage only the shipping mod folder; the SerializationFix.Test
+          # harness builds into GameData/ alongside it but is not released.
+          cp -r -v GameData/000_SerializationFix ${{ env.RELEASE_STAGING }}/GameData/
+          cp -r -v README* LICENSE* CHANGELOG* ${{ env.RELEASE_STAGING }}
           cd ${{ env.RELEASE_STAGING }}
 
       - uses: actions/upload-artifact@v4

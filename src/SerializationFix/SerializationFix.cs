@@ -241,7 +241,7 @@ internal static class SerializationFix
 // anything.
 internal class SerializationFixInjector : VesselModule
 {
-    static SerializationFixInjector()
+    protected override void OnAwake()
     {
         SerializationFix.RegisterDependentAssemblies();
     }
