@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!-- The version used for all libraries in this project. -->
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
 
     <RootNamespace>KSPSerializationFix</RootNamespace>
     <TargetFramework>net481</TargetFramework>
