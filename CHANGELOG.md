@@ -7,5 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## v1.0.1
+### Changed
+* Increase supported KSP version range to all of 1.12.
+
 ## v1.0.0
 This is the first release of SerializationFix.
